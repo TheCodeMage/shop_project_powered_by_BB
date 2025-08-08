@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+<!-- {% load static %} -->
+
+{% block title %}Shop - Online Shop{% endblock %}
+
+{% block content %}
+<h1 class="shop-title">Browse Products</h1>
+
+<!-- 🔍 Search Bar -->
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="Search products...">
+</div>
+
+<!-- Category Filter -->
+<div class="category-filter">
+    <a href="{% url 'shop' %}">All</a>
+    {% for cat in categories %}
+    <a href="{% url 'shop' %}?category={{ cat.id }}">{{ cat.name }}</a>
+    {% endfor %}
+</div>
+
+<!-- 🛍 Product Grid -->
+<div class="product-grid" id="productGrid">
+    {% for product in products %}
+    <div class="product-card" data-name="{{ product.name|lower }}">
+        <a href="{% url 'product_detail' product.id %}" class="product-card-link">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            <h2>{{ product.name }}</h2>
+            <p>MMK{{ product.price }}</p>
+        </a>
+        <button>Add to Cart</button>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

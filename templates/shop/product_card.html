@@ -1,0 +1,20 @@
+<div class="product-card">
+    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+    <h3>{{ product.name }}</h3>
+    <p>${{ product.price }}</p>
+
+    {% if user.is_authenticated %}
+    <div class="cart-buttons">
+        <form action="{% url 'add_to_cart' product.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit">+</button>
+        </form>
+        <form action="{% url 'remove_from_cart' product.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit">−</button>
+        </form>
+    </div>
+    {% else %}
+    <a href="{% url 'login' %}">Login to add to cart</a>
+    {% endif %}
+</div>

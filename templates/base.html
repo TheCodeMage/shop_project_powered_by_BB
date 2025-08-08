@@ -1,0 +1,41 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %} <!-- ဒီလို ထည့်ပေးရမယ် -->
+    <meta charset="UTF-8">
+    <meta name="description" content="Responsive Online Shop">
+    <meta name="keywords" content="Online Shop, Buy, Products, E-commerce">
+    <meta name="author" content="Ko Gyi Ko Phyo">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Online Shop{% endblock %}</title>
+
+    <!-- CSS files -->
+    <link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/product_card.css' %}">
+    <link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="logo"><a href="{% url 'home' %}">OnlineShop</a></div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'shop' %}">Shop</a></li>
+            <li><a href="#">Sign In</a></li>
+            <li><a href="#">Sign Up</a></li>
+            <li><a href="#">Cart</a></li>
+        </ul>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="{% static 'js/shop_filter.js' %}"></script>
+
+</body>
+
+</html>

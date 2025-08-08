@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - Online Shop{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+    <div class="product-detail-image">
+        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+    </div>
+    <div class="product-detail-info">
+        <h1>{{ product.name }}</h1>
+        <p class="price">MMK{{ product.price }}</p>
+        <p class="description">{{ product.description }}</p>
+        <button>Add to Cart</button>
+    </div>
+</div>
+{% endblock %}

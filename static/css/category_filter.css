@@ -1,0 +1,19 @@
+.category-filter {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.category-filter a {
+    margin: 0 10px;
+    padding: 8px 16px;
+    background-color: #eee;
+    color: #333;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.category-filter a:hover {
+    background-color: #0a74da;
+    color: white;
+}

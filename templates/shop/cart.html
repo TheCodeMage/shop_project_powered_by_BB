@@ -1,0 +1,11 @@
+<h2>Your Cart</h2>
+
+{% for item in cart_items %}
+<div class="cart-item">
+    <h3>{{ item.product.name }}</h3>
+    <p>Quantity: {{ item.quantity }}</p>
+    <p>Price: ${{ item.total_price }}</p>
+</div>
+{% endfor %}
+
+<h3>Total: ${{ total }}</h3>
