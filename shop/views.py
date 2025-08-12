@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.http import JsonResponse
 from .models import Product, Category, CartItem
 
 
@@ -82,6 +83,69 @@ def view_cart(request):
         'cart_items': cart_items,
         'total': total
     })
+
+
+# -------------------------------
+# Update Cart Item Quantity
+# -------------------------------
+@login_required
+def update_quantity(request, item_id):
+    if request.method == 'POST':
+        try:
+            cart_item = CartItem.objects.get(id=item_id, user=request.user)
+            action = request.POST.get('action')
+            
+            if action == 'increase':
+                cart_item.quantity += 1
+                cart_item.save()
+            elif action == 'decrease':
+                if cart_item.quantity > 1:
+                    cart_item.quantity -= 1
+                    cart_item.save()
+                else:
+                    cart_item.delete()
+                    return JsonResponse({'removed': True})
+            
+            # Calculate new total
+            cart_items = CartItem.objects.filter(user=request.user)
+            new_total = sum(item.total_price() for item in cart_items)
+            
+            return JsonResponse({
+                'success': True,
+                'new_quantity': cart_item.quantity if cart_item.quantity > 0 else 0,
+                'new_total': cart_item.total_price() if cart_item.quantity > 0 else 0,
+                'cart_total': new_total
+            })
+            
+        except CartItem.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Item not found'})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+# -------------------------------
+# Remove Item from Cart
+# -------------------------------
+@login_required
+def remove_item(request, item_id):
+    if request.method == 'POST':
+        try:
+            cart_item = CartItem.objects.get(id=item_id, user=request.user)
+            cart_item.delete()
+            
+            # Calculate new total
+            cart_items = CartItem.objects.filter(user=request.user)
+            new_total = sum(item.total_price() for item in cart_items)
+            
+            return JsonResponse({
+                'success': True,
+                'cart_total': new_total
+            })
+            
+        except CartItem.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Item not found'})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 
 
 # -------------------------------

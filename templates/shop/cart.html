@@ -1,11 +1,48 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/cart.css' %}">
+
 <h2>Your Cart</h2>
 
-{% for item in cart_items %}
-<div class="cart-item">
-    <h3>{{ item.product.name }}</h3>
-    <p>Quantity: {{ item.quantity }}</p>
-    <p>Price: ${{ item.total_price }}</p>
-</div>
-{% endfor %}
+{% if cart_items %}
+<div class="cart-container">
+    {% for item in cart_items %}
+    <div class="cart-item" data-item-id="{{ item.id }}">
+        <div class="item-image">
+            {% if item.product.image %}
+            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" width="100">
+            {% else %}
+            <img src="{% static 'images/placeholder.jpg' %}" alt="{{ item.product.name }}" width="100">
+            {% endif %}
+        </div>
+        <div class="item-details">
+            <h3>{{ item.product.name }}</h3>
+            <p class="item-price">${{ item.product.price }}</p>
+        </div>
+        <div class="quantity-controls">
+            <button class="quantity-btn minus-btn" onclick="updateQuantity({{ item.id }}, -1)">-</button>
+            <span class="quantity-display" id="quantity-{{ item.id }}">{{ item.quantity }}</span>
+            <button class="quantity-btn plus-btn" onclick="updateQuantity({{ item.id }}, 1)">+</button>
+        </div>
+        <div class="item-total">
+            <span id="total-{{ item.id }}">${{ item.total_price }}</span>
+        </div>
+        <div class="remove-btn">
+            <button class="remove-item-btn" onclick="removeItem({{ item.id }})">×</button>
+        </div>
+    </div>
+    {% endfor %}
 
-<h3>Total: ${{ total }}</h3>
+    <div class="cart-summary">
+        <h3>Total: $<span id="cart-total">{{ total }}</span></h3>
+        <a href="{% url 'shop' %}" class="continue-shopping-btn">Continue Shopping</a>
+        <a href="#" class="checkout-btn">Checkout</a>
+    </div>
+</div>
+
+<script src="{% static 'js/cart.js' %}"></script>
+{% else %}
+<div class="empty-cart">
+    <p>Your cart is empty</p>
+    <a href="{% url 'shop' %}" class="continue-shopping-btn">Continue Shopping</a>
+</div>
+{% endif %}
