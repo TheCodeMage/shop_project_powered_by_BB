@@ -49,8 +49,17 @@ def add_to_cart(request, product_id):
     product = Product.objects.get(id=product_id)
     cart_item, created = CartItem.objects.get_or_create(user=request.user, product=product)
 
-    cart_item.quantity += 1
+    if not created:
+        cart_item.quantity += 1
     cart_item.save()
+
+    # ✅ Success notification
+    messages.success(request, f"{product.name} has been added to your cart!")  # ✅ Show notification
+    
+    # Redirect back to where the request came from
+    referer = request.META.get('HTTP_REFERER', None)
+    if referer:
+        return redirect(referer)
     return redirect('shop')
 
 
@@ -86,7 +95,7 @@ def view_cart(request):
 
 
 # -------------------------------
-# Update Cart Item Quantity
+# Update Cart Item Quantity (Fixed to allow quantity=0)
 # -------------------------------
 @login_required
 def update_quantity(request, item_id):
@@ -98,13 +107,33 @@ def update_quantity(request, item_id):
             if action == 'increase':
                 cart_item.quantity += 1
                 cart_item.save()
+                message = "Quantity updated"
             elif action == 'decrease':
-                if cart_item.quantity > 1:
-                    cart_item.quantity -= 1
-                    cart_item.save()
-                else:
+                cart_item.quantity -= 1
+                if cart_item.quantity <= 0:
                     cart_item.delete()
-                    return JsonResponse({'removed': True})
+                    return JsonResponse({
+                        'success': True, 
+                        'removed': True, 
+                        'message': 'Item removed from cart'
+                    })
+                else:
+                    cart_item.save()
+                    message = "Quantity updated"
+            elif action == 'set':
+                # Allow setting specific quantity including 0
+                new_quantity = int(request.POST.get('quantity', 1))
+                if new_quantity <= 0:
+                    cart_item.delete()
+                    return JsonResponse({
+                        'success': True, 
+                        'removed': True, 
+                        'message': 'Item removed from cart'
+                    })
+                else:
+                    cart_item.quantity = new_quantity
+                    cart_item.save()
+                    message = "Quantity updated"
             
             # Calculate new total
             cart_items = CartItem.objects.filter(user=request.user)
@@ -114,7 +143,8 @@ def update_quantity(request, item_id):
                 'success': True,
                 'new_quantity': cart_item.quantity if cart_item.quantity > 0 else 0,
                 'new_total': cart_item.total_price() if cart_item.quantity > 0 else 0,
-                'cart_total': new_total
+                'cart_total': new_total,
+                'message': message
             })
             
         except CartItem.DoesNotExist:
@@ -191,7 +221,107 @@ def login_view(request):
     return render(request, 'auth/login.html')
 
 
+# -------------------------------  
+# Checkout - Clear cart and return success
 # -------------------------------
+@login_required
+def checkout(request):
+    if request.method == 'POST':
+        try:
+            # Get all cart items for the user
+            cart_items = CartItem.objects.filter(user=request.user)
+            cart_count = cart_items.count()
+            
+            if cart_count == 0:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Your cart is empty'
+                })
+            
+            # Calculate total
+            total = sum(item.total_price() for item in cart_items)
+            
+            # Clear the cart
+            cart_items.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Checkout successful! Cart cleared.',
+                'total': total
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Checkout failed: {str(e)}'
+            })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+# -------------------------------  
+# Add to Cart with Quantity (Enhanced)
+# -------------------------------
+@login_required
+def add_to_cart_with_quantity(request, product_id):
+    if request.method == 'POST':
+        try:
+            product = Product.objects.get(id=product_id)
+            quantity = int(request.POST.get('quantity', 1))
+            
+            if quantity <= 0:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Quantity must be greater than 0'
+                })
+            
+            cart_item, created = CartItem.objects.get_or_create(
+                user=request.user, 
+                product=product,
+                defaults={'quantity': quantity}
+            )
+            
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.save()
+            
+            # Get updated cart count
+            cart_count = CartItem.objects.filter(user=request.user).count()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Item added to cart',
+                'cart_count': cart_count
+            })
+            
+        except Product.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Product not found'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            })
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+# -------------------------------  
+# Get Cart Count (for navbar)
+# -------------------------------
+@login_required
+def get_cart_count(request):
+    if request.user.is_authenticated:
+        cart_count = CartItem.objects.filter(user=request.user).count()
+    else:
+        cart_count = 0
+    
+    return JsonResponse({'cart_count': cart_count})
+
+
+# -------------------------------  
 # Logout
 # -------------------------------
 def logout_view(request):
